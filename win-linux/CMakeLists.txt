@@ -426,6 +426,16 @@ if(WIN32)
     endforeach()
     target_link_options(DesktopEditors PRIVATE
         "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'")
+    # GUI apps: link for the WINDOWS subsystem so no console window is opened,
+    # keeping the standard main() entry point.
+    foreach(_t DesktopEditors editors_helper)
+        target_link_options(${_t} PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
+    endforeach()
+    # Application icon (IDI_MAINICON = 101). version.rc isn't part of the CMake build and
+    # would also add a second manifest, so embed just the icon from a generated .rc.
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc"
+        "101 ICON \"${CMAKE_CURRENT_SOURCE_DIR}/res/icons/desktopeditors-eo.ico\"\n")
+    target_sources(DesktopEditors PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/app_icon.rc")
 endif()
 
 # 10. Translations

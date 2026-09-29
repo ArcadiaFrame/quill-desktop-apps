@@ -49,7 +49,12 @@ int main( int argc, char *argv[] )
     Utils::setAppUserModelId();
     WCHAR * cm_line = GetCommandLine();
     InputArgs::init(cm_line);
-    if ( InputArgs::contains(L"--assoc") ) {
+    // The installer runs the app with --create-jump-list (and the uninstaller with
+    // --remove-jump-list), waiting for it to exit. Those were handled by the old projicons
+    // launcher; this build's DesktopEditors.exe is the app itself, so without this it opened
+    // its window and setup hung until the user closed it.
+    if ( InputArgs::contains(L"--assoc") || InputArgs::contains(L"--create-jump-list") ||
+            InputArgs::contains(L"--remove-jump-list") ) {
         return 0;
     }
 #else
