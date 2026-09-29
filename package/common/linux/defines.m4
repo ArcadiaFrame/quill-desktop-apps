@@ -1,9 +1,9 @@
-define(`_NAME',M4_COMPANY_NAME)dnl
+define(`_NAME',Quill Office)dnl
 define(`_GENERICNAME',Document Editor)dnl
 define(`_GENERICNAME_ru',Редактор документов)dnl
 define(`_COMMENT',Edit office documents)dnl
 define(`_COMMENT_ru',Редактировать офисные документы)dnl
-define(`_WM_CLASS',M4_COMPANY_NAME)dnl
+define(`_WM_CLASS',Quill Office)dnl
 dnl
 define(`_NEW_WORD',New document)dnl
 define(`_NEW_WORD_ar',مستند جديد)dnl

@@ -32,7 +32,7 @@
 #define reCmdLang           "--(keep)?lang[:|=](\\w{2,5})"
 
 #define APP_NAME "DesktopEditors"
-#define APP_TITLE "Euro-Office"
+#define APP_TITLE "Quill Office"
 #ifdef __linux
 # define APP_DATA_PATH "/euro-office/desktopeditors"
 # define REG_GROUP_KEY "euro-office"
@@ -46,7 +46,7 @@
 # define APP_MUTEX_NAME "TEAMLAB"
 #endif
 
-#define WINDOW_NAME "Euro-Office"
+#define WINDOW_NAME "Quill Office"
 #define WINDOW_TITLE WINDOW_NAME
 #define WINDOW_CLASS_NAME L"DocEditorsWindowClass"
 #define WINDOW_EDITOR_CLASS_NAME L"SingleWindowClass"
@@ -54,7 +54,7 @@
 #define APP_DEFAULT_LOCALE "en-US"
 #define APP_DEFAULT_SYSTEM_LOCALE 1
 #define APP_USER_MODEL_ID "ASC.Documents.5"
-#define APP_SIMPLE_WINDOW_TITLE "Euro-Office Editor"
+#define APP_SIMPLE_WINDOW_TITLE "Quill Office"
 #define APP_PROTOCOL "oo-office"
 #define FILE_PREFIX "eurooffice_"
 
