@@ -22,11 +22,9 @@
 #define OUTPUT_DIR '.'
 #endif
 #ifndef OUTPUT_FILE
-#if PACKAGE_EDITION == 'Community'
-#define OUTPUT_FILE sPackageName + '-' + VERSION + '-' + ARCH
-#else
-#define OUTPUT_FILE sPackageName + '-' + PACKAGE_EDITION + '-' + VERSION + '-' + ARCH
-#endif
+; Quill Office: a shareable setup file name (sPackageName stays Euro-Office-DesktopEditors,
+; it names the install folder and registry keys).
+#define OUTPUT_FILE 'QuillOffice-Setup-' + VERSION + '-' + ARCH
 #endif
 
 #if FileExists(BRANDING_DIR + '\branding.iss')
@@ -48,7 +46,9 @@ AppSupportURL             = {#sAppSupportURL}
 AppCopyright              = {#sAppCopyright}
 AppComments               = {cm:defprogAppDescription}
 
-DefaultGroupName          = {#sCompanyName}
+DefaultGroupName          = {#sAppName}
+; Quill Office: don't reuse an earlier install's "Euro-Office" Start menu folder.
+UsePreviousGroup          = no
 ;UsePreviousAppDir         =no
 DirExistsWarning          =no
 #if Int(DecodeVer(PREPROCVER,1)) >= 6
@@ -205,6 +205,8 @@ Source: "{#BUILD_DIR}\help\*"; DestDir: {app}; Flags: ignoreversion recursesubdi
 Source: "{#BUILD_DIR}\desktop\*.exe"; DestDir: {app}; Flags: recursesubdirs signonce;
 Source: "{#BUILD_DIR}\desktop\*.dll"; DestDir: {app}; Flags: recursesubdirs signonce;
 Source: "package.config"; DestDir: {app}\converter;
+; Quill Office: previews for the "Choose your look" page (extracted to {tmp} by _code.iss).
+Source: "{#BRANDING_DIR}\res\look-*.bmp"; Flags: dontcopy;
 #if PACKAGE_EDITION == "Enterprise"
 Source: "{#BRANDING_DIR}\..\common\license\commercial\LICENSE.txt"; DestDir: {app}; DestName: "EULA.txt";
 #else
@@ -216,6 +218,9 @@ Source: "{#BRANDING_DIR}\..\common\license\3dparty\3DPARTYLICENSE"; DestDir: {ap
 Type: filesandordirs; Name: {app}\editors\sdkjs-plugins
 Type: files; Name: "{commondesktop}\{#sOldAppIconName}.lnk"; Tasks: desktopicon;
 Type: files; Name: "{group}\{#sOldAppIconName}.lnk";
+; Quill Office: remove the Start menu folder of earlier "Euro-Office" installs.
+Type: filesandordirs; Name: "{commonprograms}\{#sCompanyName}"
+Type: filesandordirs; Name: "{userprograms}\{#sCompanyName}"
 
 [Tasks]
 Name: desktopicon; Description: {cm:CreateDesktopIcon,{#sAppName}}; GroupDescription: {cm:AdditionalIcons};

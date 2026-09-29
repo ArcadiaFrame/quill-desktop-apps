@@ -858,11 +858,93 @@ end;
 function SendTextMessageTimeout(hWnd: HWND; Msg: UINT; wParam: WPARAM; lParam: PAnsiChar; fuFlags: UINT; uTimeout: UINT; out lpdwResult: DWORD): LRESULT;
   external 'SendMessageTimeoutA@user32.dll stdcall';
 
+// ── Quill Office: "Choose your look" ─────────────────────────────────────────
+// Aero Glass themes first, with previews at their default colors (res\look-*.bmp, made by
+// aero\installer\build_installer_art.py). The choice is the app's UITheme registry value
+// (HKCU\Software\<APP_PATH>): a custom theme's file name in {app}\uithemes, or theme-system.
+var
+  lookPage: TInputOptionWizardPage;
+  lookPreview: TBitmapImage;
+
+function LookId(i: Integer): string;
+begin
+  case i of
+    0: Result := 'theme-aero-dark';
+    1: Result := 'theme-aero-light';
+    2: Result := 'theme-aero-sepia';
+    3: Result := 'theme-matte-dark';
+    4: Result := 'theme-matte-light';
+  else
+    Result := 'theme-system';
+  end;
+end;
+
+procedure UpdateLookPreview(Sender: TObject);
+var
+  i: Integer;
+begin
+  i := lookPage.SelectedValueIndex;
+  if i < 0 then i := 0;
+  lookPreview.Bitmap.LoadFromFile(ExpandConstant('{tmp}\look-' + LookId(i) + '.bmp'));
+end;
+
+procedure InitializeLookPage;
+var
+  i: Integer;
+  current: string;
+begin
+  lookPage := CreateInputOptionPage(wpWelcome, 'Choose your look',
+    'How should {#sAppName} look?',
+    'You can change this any time in Settings or Personalize, where you can also pick your own interface color.',
+    True, False);
+  lookPage.Add('Aero Glass Dark (recommended)');
+  lookPage.Add('Aero Glass Light');
+  lookPage.Add('Aero Glass Neutral');
+  lookPage.Add('Matte Dark');
+  lookPage.Add('Matte Light');
+  lookPage.Add('Classic (follow Windows light/dark)');
+  for i := 0 to 5 do
+    ExtractTemporaryFile('look-' + LookId(i) + '.bmp');
+
+  // Upgrades: keep what the user already chose.
+  lookPage.SelectedValueIndex := 0;
+  if RegQueryStringValue(HKEY_CURRENT_USER, 'Software\{#APP_PATH}', 'UITheme', current) then begin
+    lookPage.SelectedValueIndex := 5;
+    for i := 0 to 4 do
+      if Pos(LookId(i) + '.json', current) > 0 then
+        lookPage.SelectedValueIndex := i;
+  end;
+
+  lookPage.CheckListBox.Width := lookPage.SurfaceWidth div 2 - ScaleX(6);
+  lookPreview := TBitmapImage.Create(lookPage);
+  lookPreview.Parent := lookPage.Surface;
+  lookPreview.Left := lookPage.CheckListBox.Left + lookPage.CheckListBox.Width + ScaleX(12);
+  lookPreview.Top := lookPage.CheckListBox.Top;
+  lookPreview.Width := lookPage.SurfaceWidth - lookPreview.Left;
+  lookPreview.Height := lookPreview.Width * 200 div 320;
+  lookPreview.Stretch := True;
+  lookPage.CheckListBox.OnClickCheck := @UpdateLookPreview;
+  UpdateLookPreview(nil);
+end;
+
+procedure SaveLookChoice;
+var
+  id, current: string;
+begin
+  if lookPage = nil then exit;
+  // Silent installs never override an existing choice.
+  if WizardSilent() and RegQueryStringValue(HKEY_CURRENT_USER, 'Software\{#APP_PATH}', 'UITheme', current) then exit;
+  id := LookId(lookPage.SelectedValueIndex);
+  if id <> 'theme-system' then id := id + '.json';
+  RegWriteStringValue(HKEY_CURRENT_USER, 'Software\{#APP_PATH}', 'UITheme', id);
+end;
+
 procedure InitializeWizard();
 var
   paramSkip: string;
   path: string;
 begin
+  InitializeLookPage();
   InitializeAssociatePage();
 
   if RegQueryStringValue(GetHKLM(), '{#APP_REG_PATH}', 'AppPath', path) and
@@ -989,6 +1071,7 @@ var
 begin
   if CurStep = ssPostInstall then begin
     DoPostInstall();
+    SaveLookChoice();
     GetWindowsVersionEx(version);
     if (version.Major > 6) or ((version.Major = 6) and (version.Minor >= 1)) then begin
       Exec(ExpandConstant('{app}\{#iconsExe}'), '--create-jump-list', '', SW_SHOWNORMAL, ewWaitUntilTerminated, ErrorCode);
