@@ -81,8 +81,16 @@ FROM core-base AS desktop-linux
 
     ENV PRODUCT_VERSION=${PRODUCT_VERSION}
     ENV BUILD_NUMBER=${BUILD_NUMBER}
+
+    # Parallel compile jobs. Ninja defaults to CPU count + 2, which runs Docker Desktop out
+    # of memory on many-core machines (34 jobs vs 16 GB: BuildKit crashed with "EOF").
+    # About 1.3 GB per job; raise it with --set desktop-linux.args.BUILD_JOBS=N.
+    ARG BUILD_JOBS=12
+    ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
+    ENV VCPKG_MAX_CONCURRENCY=${BUILD_JOBS}
     
-    ENV ABOUT_PAGE_APP_NAME="${COMPANY_NAME} ${PRODUCT_NAME}"
+    # Quill Office: the About box name (package and install paths keep COMPANY_NAME/PRODUCT_NAME).
+    ENV ABOUT_PAGE_APP_NAME="Quill Office"
 
     RUN --mount=type=cache,target=/build-cache-desktop,id=build-cache-desktop-${CACHE_BUST} \
         --mount=type=cache,target=/nuget-cache,id=nuget-cache-${CACHE_BUST} \
@@ -121,6 +129,15 @@ FROM core-base AS desktop-linux
         --src=/desktopeditors/editors/sdkjs/slide/themes \
         --allfonts=/desktopeditors/converter/AllFonts.js \
         --output=/desktopeditors/editors/sdkjs/common/Images
+
+    # Quill Office / Aero layer (aero/apply-aero.py, same as build.ps1 step 9c): themes,
+    # Personalize, Task Launcher, Quill, extensions, fonts, templates, product name. Runs before
+    # allfontsgen is removed (it re-indexes the bundled extra fonts). The script expects the
+    # repo layout (<repo>/aero, <repo>/core-fonts); its *.orig backups aren't shipped.
+    COPY aero /quill/aero
+    RUN ln -s /core-fonts /quill/core-fonts && \
+        python3 /quill/aero/apply-aero.py /desktopeditors && \
+        find /desktopeditors -name '*.orig' -delete
 
     RUN rm /desktopeditors/converter/allthemesgen && \
         rm /desktopeditors/converter/allfontsgen
