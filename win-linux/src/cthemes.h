@@ -132,6 +132,7 @@ public:
     auto contains(const QString& id) -> bool;
     auto validate(const QJsonObject&) -> bool;
     auto checkDestinationThemeFileExist(const QString& srcpath) -> bool;
+    auto overrideCurrentColors(const QJsonObject& colors) -> bool;
 private:
     class CThemesPrivate;
     CThemesPrivate * m_priv = nullptr;

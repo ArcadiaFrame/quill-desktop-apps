@@ -61,6 +61,7 @@ public:
     bool slideshowHoldView(int id) const;
     bool isSlideshowMode() const;
     virtual void applyTheme(const std::wstring&) final;
+    void refreshThemeColors();
     virtual void focus() final;
     void close();
     bool isAboutToClose() const;

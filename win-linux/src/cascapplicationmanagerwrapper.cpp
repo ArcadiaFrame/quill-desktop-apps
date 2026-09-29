@@ -392,6 +392,15 @@ bool CAscApplicationManagerWrapper::processCommonEvent(NSEditorApi::CAscCefMenuE
             applyTheme( themes().parseThemeName(pData->get_Param()) );
             return true;
         } else
+        if ( cmd.compare(L"aero:colors") == 0 ) {
+            // Aero interface color (aero/settings.js): {"theme": id, "colors": {token: "#rrggbb"}}.
+            // Ignored when it was computed for another theme than the current one.
+            const QJsonObject json = QJsonDocument::fromJson(QString::fromStdWString(pData->get_Param()).toUtf8()).object();
+            if ( json.value("theme").toString().toStdWString() == themes().current().id() &&
+                    themes().overrideCurrentColors(json.value("colors").toObject()) && mainWindow() )
+                mainWindow()->refreshThemeColors();
+            return true;
+        } else
         if ( !(cmd.find(L"uitheme:add") == std::wstring::npos) ) {
             QString file_path = CEditorTools::getlocaltheme(event->get_SenderId());
 

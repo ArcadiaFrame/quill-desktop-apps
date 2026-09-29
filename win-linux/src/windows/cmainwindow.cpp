@@ -259,6 +259,27 @@ void CMainWindow::applyTheme(const std::wstring& theme)
     }
 }
 
+// Aero: repaint the window frame and tab bar after the current theme's colors changed in
+// place (CThemes::overrideCurrentColors). Unlike applyTheme(), sends nothing to the pages.
+void CMainWindow::refreshThemeColors()
+{
+    const std::wstring theme = GetCurrentTheme().id();
+    CWindowPlatform::applyTheme(theme);
+    QString css{AscAppManager::getWindowStylesheets(m_dpiRatio)};
+#ifdef __linux__
+    css.append(Utils::readStylesheets(":styles/styles_unix.qss"));
+#endif
+    m_pMainPanel->setStyleSheet(css);
+    QString tab_css = Utils::readStylesheets(":/styles/tabbar.qss");
+    m_pTabs->tabBar()->setStyleSheet(tab_css.arg(GetColorQValueByRole(ecrWindowBackground),
+                                                 GetColorQValueByRole(ecrButtonBackground),
+                                                 GetColorQValueByRole(ecrButtonHoverBackground),
+                                                 GetColorQValueByRole(ecrButtonPressedBackground),
+                                                 GetColorQValueByRole(ecrTabDivider),
+                                                 GetColorQValueByRole(ecrTabWordActive)));
+    m_pTabs->applyUITheme(GetActualTheme(theme));
+}
+
 /** Private **/
 
 void CMainWindow::focus()

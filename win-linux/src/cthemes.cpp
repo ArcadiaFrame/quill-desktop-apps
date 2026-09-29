@@ -345,7 +345,9 @@ public:
         GET_REGISTRY_USER(_reg_user);
 
 #if !defined(__OS_WIN_XP)
-        QString user_theme = _reg_user.value(REGISTRY_THEME_KEY, THEME_ID_SYSTEM).toString();
+        // Quill Office: Aero Glass Dark (uithemes/theme-aero-dark.json) when nothing was chosen
+        // yet; falls back to the system theme below if that file is missing.
+        QString user_theme = _reg_user.value(REGISTRY_THEME_KEY, "theme-aero-dark.json").toString();
 #else
         QString user_theme = _reg_user.value(REGISTRY_THEME_KEY, THEME_DEFAULT_LIGHT_ID).toString();
 #endif
@@ -957,4 +959,33 @@ auto CThemes::onSystemDarkColorScheme(bool isdark) -> void
 auto CThemes::isSystemSchemeDark() -> const bool
 {
     return m_priv->is_system_theme_dark;
+}
+
+// Aero: the interface color picker hue-shifts the theme inside the web pages, which then send
+// the resulting colors ("aero:colors") so the native window bar and tabs match. Accepts native
+// names ("window-background") and web token names ("background-toolbar", via map_alias_names).
+// In memory only: switching themes reloads the theme from its file, and the pages send again.
+auto CThemes::overrideCurrentColors(const QJsonObject& colors) -> bool
+{
+    if ( !m_priv->current )
+        return false;
+
+    QJsonObject& values = m_priv->current->m_priv->jsonValues;
+    bool changed = false;
+    for ( const auto &color_name : NSTheme::map_names ) {
+        QString value;
+        if ( colors.contains(color_name.second) ) {
+            value = colors.value(color_name.second).toString();
+        } else {
+            const auto it = NSTheme::map_alias_names.find(color_name.second);
+            if ( it != NSTheme::map_alias_names.end() && colors.contains(it->second) )
+                value = colors.value(it->second).toString();
+        }
+
+        if ( !value.isEmpty() && QColor(value).isValid() && values.value(color_name.second).toString() != value ) {
+            values[color_name.second] = value;
+            changed = true;
+        }
+    }
+    return changed;
 }
